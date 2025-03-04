@@ -16,7 +16,7 @@ crossterm = "0.28"
 thiserror = "1.0"
 
 [target.'cfg(unix)'.dependencies]
-xterm-query = "0.5"
+xterm-query = {git = 'https://github.com/msullivan/xterm-query/'}
 
 [dev-dependencies]
 crossterm = "0.28"
@@ -25,4 +25,3 @@ crossterm = "0.28"
 # coolor = { path = "../coolor" }
 # crossterm = { path = "../crossterm" }
 # xterm-query = { path = "../xterm-query" }
-
