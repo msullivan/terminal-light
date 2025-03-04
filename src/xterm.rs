@@ -1,13 +1,13 @@
 use crate::*;
+use std::time::Duration;
 
-fn query(query: &str, timeout_ms: u16) -> Result<String, TlError> {
+fn query(query: &str, timeout_ms: u64) -> Result<String, TlError> {
     use crossterm::terminal::*;
     let switch_to_raw = !is_raw_mode_enabled()?;
     if switch_to_raw {
         enable_raw_mode()?;
     }
-    let res = xterm_query::query_osc(query, timeout_ms)
-        .map_err(|e| e.into());
+    let res = xterm_query::query_osc(query, timeout_ms).map_err(|e| e.into());
     if switch_to_raw {
         disable_raw_mode()?;
     }
@@ -16,13 +16,13 @@ fn query(query: &str, timeout_ms: u16) -> Result<String, TlError> {
 
 /// Query the bg color, assuming the terminal is in raw mode,
 /// using the "dynamic colors" OSC escape sequence.
-pub fn query_bg_color() -> Result<Rgb, TlError> {
+pub fn query_bg_color(timeout: Duration) -> Result<Rgb, TlError> {
     // we use the "dynamic colors" OSC escape sequence. It's sent with a ? for
     // a query and normally answered by the terminal with a color.
     // References:
     // - https://stackoverflow.com/a/28334701/263525
     // - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-    let s = query("\x1b]11;?\x07", 100)?;
+    let s = query("\x1b]11;?\x07", timeout.as_millis() as u64)?;
     // The string we receive is like `"]11;rgb:<red>/<green>/<blue>\\"`
     // where `<red>`, `<green>`, and `<blue>` are 4 hex digits.
     // Most terminals don't support such precision so they fill the 4 digits

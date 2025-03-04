@@ -87,9 +87,14 @@ mod error;
 #[cfg(unix)]
 mod xterm;
 
+use std::time::Duration;
 pub use {coolor::*, error::*};
 
+const DEFAULT_TIMEOUT: Duration = Duration::from_millis(100);
+
 /// Try to determine the background color of the terminal.
+///
+/// Supports specifying a timeout.
 ///
 /// The result may come as Ansi or Rgb, depending on where
 /// the information has been found.
@@ -97,13 +102,13 @@ pub use {coolor::*, error::*};
 /// If you want it as RGB:
 ///
 /// ```
-/// let backround_color_rgb = terminal_light::background_color()
+/// let background_color_rgb = terminal_light::background_color_with_timeout(TIMEOUT)
 ///     .map(|c| c.rgb()); // may be an error
 /// ```
-pub fn background_color() -> Result<Color, TlError> {
+pub fn background_color_with_timeout(timeout: Duration) -> Result<Color, TlError> {
     #[cfg(unix)]
     {
-        let xterm_color = xterm::query_bg_color();
+        let xterm_color = xterm::query_bg_color(timeout);
         if let Ok(xterm_color) = xterm_color {
             return Ok(Color::Rgb(xterm_color));
         }
@@ -115,12 +120,43 @@ pub fn background_color() -> Result<Color, TlError> {
     Err(TlError::Unsupported)
 }
 
+/// Try to determine the background color of the terminal.
+///
+/// Times out after 100ms.
+///
+/// The result may come as Ansi or Rgb, depending on where
+/// the information has been found.
+///
+/// If you want it as RGB:
+///
+/// ```
+/// let background_color_rgb = terminal_light::background_color()
+///     .map(|c| c.rgb()); // may be an error
+/// ```
+pub fn background_color() -> Result<Color, TlError> {
+    background_color_with_timeout(DEFAULT_TIMEOUT)
+}
+
 /// Try to return the "luma" value of the terminal's background, characterizing
 /// the "light" of the color, going from 0 (black) to 1 (white).
+///
+/// Supports specifying a timeout.
+///
+/// You can say a terminal is "dark" when the luma is below 0.2 and
+/// "light" when it's over 0.9. If you need to choose a pivot between
+/// "rather dark" and "rather light" then 0.6 should do.
+pub fn luma_with_timeout(timeout: Duration) -> Result<f32, TlError> {
+    background_color_with_timeout(timeout).map(|c| c.luma())
+}
+
+/// Try to return the "luma" value of the terminal's background, characterizing
+/// the "light" of the color, going from 0 (black) to 1 (white).
+///
+/// Times out after 100ms.
 ///
 /// You can say a terminal is "dark" when the luma is below 0.2 and
 /// "light" when it's over 0.9. If you need to choose a pivot between
 /// "rather dark" and "rather light" then 0.6 should do.
 pub fn luma() -> Result<f32, TlError> {
-    background_color().map(|c| c.luma())
+    luma_with_timeout(DEFAULT_TIMEOUT)
 }
