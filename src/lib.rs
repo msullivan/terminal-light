@@ -52,20 +52,26 @@ Malus:
 
 Modern terminals implement this xterm extension: a query making it possible to know the background color as RGB.
 
-Terminal-light sends the query to `stdout`, waits for the answer on `stdin` with a timeout of 20ms, then analyses this answer.
+Terminal-light sends the query to `stdout`, then sends a more widely understood vt100 query (Status Report), waits for the answer on `stdin` with a default timeout of 100ms, then analyses this answer.
+
+If Status Report is responded to before the background color query, we know it is not supported.
 
 Bonus:
 
 * this works well on all tested linux terminals
 * the value is precise (RGB)
 * the value is up to date when it's available
+* even most terminals that don't support the xterm extension (PuTTY's pterm, for example) don't
+  need to wait for the timeout
 
 Malus:
 
 * waiting for stdin with a timeout isn't implemented on Windows in this crate (help welcome)
 * this isn't instant, a delay of 10 ms to get the answer isn't unusual
-* if a not compatible terminal doesn't answer at all, we're waiting for 20ms
+* if a terminal doesn't support the vt100 Status Report, we're waiting for 100ms
 * it may fail on some terminal multiplexers
+* if the timeout expires (because we are running over a slow ssh connection, for example),
+  user-visible nonsense will be spewed to the terminal.
 
 ## Global strategy used by Terminal-light
 
